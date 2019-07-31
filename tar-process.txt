@@ -1,0 +1,64 @@
+#!/bin/bash
+
+tar_process(){
+cd /home/$USER/
+x=(`cat /home/$USER/parsed_file.csv | cut -d"," -f2`)
+x1=${#x[@]}
+y=(`cat /home/$USER/parsed_file.csv | cut -d"," -f4- | sed -e "s/,/-/g"`)
+y1=${#y[@]}
+z=(`cat /home/$USER/parsed_file.csv | cut -d"," -f2-3 | sed -e "s/ /-/g" | sed -e "s/,/-/g"`)
+z1=${#z[@]}
+echo $'\e[1;33m'"STARTING TAR PROCESS...."$'\e[0m'
+echo
+echo $'\e[1;31m'"DO NOT KILL THE SHELL OR PRESS CTRL-C !!!"$'\e[0m'
+echo
+for ((i=0,j=0,k=0 ; i<${x1},j<${y1},k<${z1} ; i++,j++,k++));
+    do
+       echo
+       sleep 2
+       test=$(echo "${y[$i]}" | sed -e "s/-/ /g")
+       echo $'\e[1;36m'Current Directories being Archived and Compressed are : $test$'\e[0m'
+       echo
+       LogMsg $LOGFILE "-----------------Connecting to Source ${x[$i]} --------------"
+       ssh -tt -n -q -o StrictHostKeyChecking=no -i /home/opc/keys/ocs_key opc@${x[$i]} "
+           sudo ls $test 1> /tmp/check_dir.log 2> /tmp/check_dir_error.log"
+       scp -q -i /home/opc/keys/ocs_key opc@${x[$i]}:"/tmp/check_dir.log /tmp/check_dir_error.log" /home/$USER/logs
+       if [[ `cat /home/$USER/logs/check_dir_error.log` == *"No such file or directory"* || `cat /home/$USER/logs/check_dir_error.log` == *"Permission denied"* ]];
+               then
+                   echo
+                   cat /home/$USER/logs/check_dir_error.log
+                   echo
+                   echo $'\e[1;31m'"Above Directory Does not exist on Source ${x[$i]}...Exiting"$'\e[0m'
+                   exit 1
+               else
+                   echo
+         fi
+      done
+       ssh -tt -n -q -o StrictHostKeyChecking=no -i /home/opc/keys/ocs_key opc@${x[$i]} "
+           cd $mpoint2
+           sudo tar -cvpPf ${z[$i]}.tar.gz --totals $test 1> /tmp/remote_tar.log 2> /tmp/remote_tar_error.log"
+       scp -q -i /home/opc/keys/ocs_key opc@${x[$i]}:"/tmp/remote_tar.log /tmp/remote_tar_error.log" /home/$USER/logs
+          if [[ `cat /home/$USER/logs/remote_tar_error.log` == *"Exiting with failure status"* || `cat /home/$USER/logs/remote_tar_error.log` == *"Permission denied"* || `cat /home/$USER/logs/remote_tar_error.log` == *"you must have a tty to run sudo"* ]];
+               then
+                   echo
+                   cat /home/$USER/logs/remote_tar_error.log
+                   echo
+                   echo $'\e[1;31m'"TAR Command failed...Exiting"$'\e[0m'
+                   exit 1
+               else
+                   echo
+         fi
+         if [[ `cat /home/$USER/logs/remote_tar_error.log` == *"Total bytes written"* ]];
+              then
+                  cat /home/$USER/logs/remote_tar.log
+                  echo $'\e[1;32m'"tar Process completed successfully..."$'\e[0m'
+                  LogMsg $LOGFILE "TAR PROCESS COMPLETE FOR $test"
+                  echo
+                  echo $'\e[1;32m'"TAR PROCESS COMPLETE FOR $test"$'\e[0m'
+                  echo
+         fi
+   done
+}
+
+
+tar_process
