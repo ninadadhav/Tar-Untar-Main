@@ -1,7 +1,18 @@
 #!/bin/bash
 
+LogMsg(){
+        local log=$1
+        local msg=$2
+        local pid=$$
+        local now=$(date +'%s')
+        local stamp=$(date --date "@${now}" +'%Y/%m/%d %H:%M:%S')
+        echo "${stamp}-${pid}-${msg}" >>$log
+}
+
 source_connectivity(){
 echo $'\e[1;36m'"Checking Source Servers Connectivity..."$'\e[0m'
+LogMsg $LOGFILE "Checking Source Servers Connectivity"
+
 echo
 echo
 sleep 2
@@ -49,21 +60,20 @@ for f in $(cat /home/$USER/parsed_file.csv | cut -d"," -f2);
    done
    cat /home/$USER/logs/final.log
    final=`cat /home/$USER/logs/final.log`
-   if [[ "${final}" == *"DOES NOT EXIST"* ]]; then
+   LogMsg $LOGFILE "$final"
+   if [[ "${final}" == *"DOES NOT EXIST"* || "${final1}" == *"Cannot determine"* ]]; then
               echo $'\e[1;31m'____________________________________________________________________________________________$'\e[0m'
               echo
               echo $'\e[1;31m'"One or more Errors have been found and highlighted above...Please fix and rerun...EXITING"$'\e[0m'
               echo $'\e[1;31m'____________________________________________________________________________________________$'\e[0m'
               echo
-              LogMsg $LOGFILE "`cat /home/$USER/logs/final.log`"
-              LogMsg $LOGFILE "One or more Errors have been found and highlighted above...Please fix and rerun...EXITING"
+              LogMsg $LOGFILE "One or more Errors have been found...EXITING"
               exit 1
    else
               echo $'\e[1;32m'_________________________________________________________$'\e[0m'
               echo
               echo $'\e[1;32m'"No Errors found with Source Connectivity...Proceeding"$'\e[0m'
               echo $'\e[1;32m'_________________________________________________________$'\e[0m'
-              LogMsg $LOGFILE "`cat /home/$USER/logs/final.log`"
               LogMsg $LOGFILE "No Errors found with Source Connectivity...Proceeding"
    fi
 
