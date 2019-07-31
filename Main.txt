@@ -1,0 +1,105 @@
+#!/bin/bash
+# ***********************************
+# Created by Ninad Adhav            *
+# Email ninad.adhav@oracle.com      *
+# ***********************************
+
+LogMsg(){
+        local log=$1
+        local msg=$2
+        local pid=$$
+        local now=$(date +'%s')
+        local stamp=$(date --date "@${now}" +'%Y/%m/%d %H:%M:%S')
+        echo "${stamp}-${pid}-${msg}" >>$log
+}
+
+CreateLog(){
+        file=$1
+        [ ! -e ${file} ] && touch $file
+        sudo chmod a+rw $file
+        sudo chown opc:opc $file
+}
+
+
+input_csv(){
+echo Enter the path to the Input CSV File...
+read -p 'Input Path to the file and press Enter : ' inputpath
+if [[ -f $inputpath ]]
+   then
+       LogMsg $LOGFILE " $inputpath File found...proceeding to Tar Process"
+   else
+       echo
+       echo $'\e[1;31m'CSV File does not exist at $inputpath ....Exiting !!!$'\e[0m'
+       LogMsg $LOGFILE "CSV File does not exist at $inputpath ....Exiting !!!"
+       echo
+       exit 1
+fi
+sed -n '2,$p' <$inputpath > /home/$USER/parsed_file.csv
+LogMsg $LOGFILE "Installing Dos2unix Package for File conversion"
+in=$(sudo yum install -q -y dos2unix pv && dos2unix -q /home/$USER/parsed_file.csv)
+LogMsg $LOGFILE "$in"
+echo
+}
+
+soarvm_directory(){
+if [[ -d $mpoint2 ]];
+  then
+     LogMsg $LOGFILE "Directory $mpoint2 found on SOAR VM...proceeding"
+  else
+     echo $'\e[1;31m'"****************************************************************"'\e[0m'
+     echo $'\e[1;31m'"* SOURCE NAS DIRECTORY DOES NOT EXIST ON SOAR VM...EXITING !!  *"'\e[0m'
+     echo $'\e[1;31m'"****************************************************************"'\e[0m'
+     LogMsg $LOGFILE "NAS DIRECTORY $mpoint2 DOES NOT EXIST on SOAR VM (Needs to have Source Server's shared NAS) ...EXITING !!"
+     exit 1
+fi
+}
+
+read_values(){
+read -p 'Enter Mount Point Directory Path for Source Servers: ' mpoint
+echo
+mpoint1=$mpoint
+mpoint2=${mpoint1%/}
+
+read -p 'Enter Mount Point Directory Path for Target Servers: ' mountpoint
+LogMsg $LOGFILE "Target Mount Point Selected : $mountpoint"
+echo
+mountpoint1=$mountpoint
+mountpoint2=${mountpoint1%/}
+
+read -p 'Enter IP Address of Target Server which has OCI CLI installed on it : ' oci_target
+echo
+}
+
+LOGFILE=/var/log/psft-$HOSTNAME.log
+CreateLog ${LOGFILE}
+
+echo "' '" > /var/log/psft-$HOSTNAME.log
+sudo mkdir -p /home/$USER/logs
+sudo rm -rf /home/$USER/logs/*
+
+input_csv
+read_values
+sleep 1
+
+soarvm_directory
+sleep 1
+echo
+
+source source_connectivity.sh
+sleep 1
+echo
+
+source target_connectivity.sh
+sleep 1
+
+source tar_process.sh
+source upload.sh
+source downloadfromobjstorage.sh
+source untar_process.sh
+
+echo
+echo $'\e[1;32m'"**********************************"$'\e[0m'
+echo $'\e[1;32m'PROCESS SUCCESSFULLY COMPLETED$'\e[0m'
+echo $'\e[1;32m'"**********************************"$'\e[0m'
+
+echo
