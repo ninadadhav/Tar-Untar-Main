@@ -1,0 +1,56 @@
+#!/bin/bash
+
+untar_process(){
+echo $'\e[1;33m'"Starting Untar Process..."$'\e[0m'
+echo
+echo $'\e[1;31m'"DO NOT KILL THE SHELL OR PRESS CTRL-C !!!"$'\e[0m'
+echo
+cd /home/$USER/
+a=(`cat /home/$USER/parsed_file.csv | cut -d"," -f1`)
+a1=${#a[@]}
+b=(`cat /home/$USER/parsed_file.csv | cut -d"," -f2-3 | sed -e "s/ /-/g" | sed -e "s/,/-/g"`)
+b1=${#b[@]}
+for ((u=0,v=0 ; u<${a1},v<${b1} ; u++,v++));
+    do
+       echo
+       echo $'\e[1;36m'"Connecting to Target ${a[$u]}"$'\e[0m'
+       echo
+       sleep 2
+       echo  $'\e[1;36m'"Downloading ${b[$u]}.tar.gz from Object Storage to Local Storage"$'\e[0m'
+       echo $'\e[1;36m'"Download in process..."$'\e[0m'
+       sleep 1
+       LogMsg $LOGFILE "CONNECTING TO TARGET ${a[$u]}"
+       echo
+       LogMsg $LOGFILE "DOWNLOADING ${b[$u]}.tar.gz FROM OBJECT STORAGE"
+       ssh -n -q -o StrictHostKeyChecking=no -i /home/opc/keys/ocs_key opc@${a[$u]} "
+           cd $mountpoint2
+           sudo tar -xvpPf ${b[$u]}.tar.gz 1> /tmp/remote_untar.log 2> /tmp/remote_untar_error.log"
+       scp -i /home/opc/keys/ocs_key opc@${a[$u]}:"/tmp/remote_untar.log /tmp/remote_untar_error.log" /home/$USER/logs
+       if [[ -s "/home/$USER/logs/remote_untar_error.log" ]];
+        then
+          if [[ `cat /home/$USER/logs/remote_untar_error.log` == *"Exiting with failure status"* ]];
+               then
+                   echo
+                   echo $'\e[1;31m'"TAR Command failed...Exiting"$'\e[0m'
+                   cat /home/$USER/logs/remote_untar_error.log
+                   exit 1
+               else
+                   echo
+                   echo $'\e[1;31m'"TAR Command failed...Exiting"$'\e[0m'
+                   cat /home/$USER/logs/remote_untar_error.log
+                   exit 1
+         fi
+ else
+        cat /home/$USER/logs/remote_untar.log
+        echo
+        echo $'\e[1;32m'"Untar Process completed successfully..."$'\e[0m'
+ fi
+       LogMsg $LOGFILE "UNTAR PROCESS COMPLETE FOR $test"
+       echo
+       echo $'\e[1;32m'"UNTAR PROCESS COMPLETE FOR $test"$'\e[0m'
+       echo
+    done
+    sleep 1
+}
+
+untar_process
