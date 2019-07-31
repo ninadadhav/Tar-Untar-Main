@@ -76,13 +76,15 @@ LogMsg $LOGFILE "Target IP Address for Target Server Selected is $oci_target"
 echo
 }
 
+sudo mkdir -p /home/$USER/PSFT/logs
+LogMsg $LOGFILE "Creating Logs Folder"
+
 LOGFILE=/home/$USER/PSFT/psft-$HOSTNAME.log
 CreateLog ${LOGFILE}
 
 echo "' '" > /home/$USER/PSFT/psft-$HOSTNAME.log
 LogMsg $LOGFILE "Log File Created at /home/$USER/PSFT "
-sudo mkdir -p /home/$USER/PSFT/logs
-LogMsg $LOGFILE "Creating Logs Folder"
+
 sudo rm -rf /home/$USER/PSFT/logs/*
 LogMsg $LOGFILE "Cleaning Log Files"
 
