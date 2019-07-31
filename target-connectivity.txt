@@ -1,7 +1,17 @@
 #!/bin/bash
 
+LogMsg(){
+        local log=$1
+        local msg=$2
+        local pid=$$
+        local now=$(date +'%s')
+        local stamp=$(date --date "@${now}" +'%Y/%m/%d %H:%M:%S')
+        echo "${stamp}-${pid}-${msg}" >>$log
+}
+
 target_connectivity(){
 echo $'\e[1;36m'"Checking Target Server Connectivity..."$'\e[0m'
+LogMsg $LOGFILE "Checking Target Connectivity"
 echo
 sleep 2
 for g in $(cat /home/$USER/parsed_file.csv | cut -d"," -f1);
@@ -48,13 +58,13 @@ for g in $(cat /home/$USER/parsed_file.csv | cut -d"," -f1);
    cat /home/$USER/logs/final1.log
 
    final1=`cat /home/$USER/logs/final1.log`
-   if [[ "${final1}" == *"DOES NOT EXIST"* ]]; then
+   LogMsg $LOGFILE "$final1"
+   if [[ "${final1}" == *"DOES NOT EXIST"* || "${final1}" == *"Cannot determine"* ]]; then
               echo $'\e[1;31m'____________________________________________________________________________________________$'\e[0m'
               echo
               echo $'\e[1;31m'"One or more Errors have been found and highlighted above...Please fix and rerun...EXITING"$'\e[0m'
               echo $'\e[1;31m'____________________________________________________________________________________________$'\e[0m'
-              LogMsg $LOGFILE "`cat /home/$USER/logs/final1.log`"
-              LogMsg $LOGFILE "One or more Errors have been found and highlighted above...Please fix and rerun...EXITING"$'\e[0m'
+              LogMsg $LOGFILE "One or more Errors have been found"$'\e[0m'
               echo
               exit 1
    else
@@ -62,7 +72,6 @@ for g in $(cat /home/$USER/parsed_file.csv | cut -d"," -f1);
               echo
               echo $'\e[1;32m'"No Errors found with Target Connectivity... Proceeding"$'\e[0m'
               echo $'\e[1;32m'_________________________________________________________$'\e[0m'
-              LogMsg $LOGFILE "`cat /home/$USER/logs/final1.log`"
               LogMsg $LOGFILE "No Errors found with Target Connectivity... Proceeding"
               echo
    fi
