@@ -1,14 +1,24 @@
 #!/bin/bash
 
+LogMsg(){
+        local log=$1
+        local msg=$2
+        local pid=$$
+        local now=$(date +'%s')
+        local stamp=$(date --date "@${now}" +'%Y/%m/%d %H:%M:%S')
+        echo "${stamp}-${pid}-${msg}" >>$log
+}
+
 downloadfromobjstorage(){
 echo $'\e[1;33m'"Starting Download from Object Storage to Target Servers..."$'\e[0m'
+LogMsg $LOGFILE "Starting Download from Object Storage to Target Servers"
 echo
 echo $'\e[1;31m'"DO NOT KILL THE SHELL OR PRESS CTRL-C !!!"$'\e[0m'
 echo
 cd /home/$USER/
 echo $'\e[1;36m'"Connecting to Target $oci_target to Download from Object Storage"$'\e[0m'
 echo
-LogMsg $LOGFILE "----------------- Connecting to $oci_target and downloading files--------------"
+LogMsg $LOGFILE "Connecting to $oci_target and downloading files"
 ssh -n -q -o StrictHostKeyChecking=no -i /home/opc/keys/ocs_key opc@$oci_target "
    oci os object bulk-download -bn OCS_Migrations --download-dir $mountpoint2 " 1> /home/$USER/logs/download.log 2> /home/$USER/logs/download_error.log
    sleep 1
@@ -16,18 +26,25 @@ ssh -n -q -o StrictHostKeyChecking=no -i /home/opc/keys/ocs_key opc@$oci_target 
         if [[ `cat /home/$USER/logs/download_error.log` == *"Error"* || `cat /home/$USER/logs/download_error.log` == *"Permission denied"* ]];
                then
                    echo $'\e[1;31m'"OCI Command failed due to the Following Errors...Exiting"$'\e[0m'
+                   LogMsg $LOGFILE "OCI Command failed"
                    cat /home/$USER/logs/download_error.log
+                   LogMsg $LOGFILE "`cat /home/$USER/logs/download_error.log`"
                    exit 1
           else
                   cat /home/$USER/logs/download_error.log
+                  LogMsg $LOGFILE "`cat /home/$USER/logs/download_error.log`"
           fi
           if [[ `cat /home/$USER/logs/download.log` == *"Permission denied"* ]];
                        then
                            echo $'\e[1;31m'"OCI Command failed due to the Following Errors...Exiting"$'\e[0m'
+                           LogMsg $LOGFILE "OCI Command Failed"
                            cat /home/$USER/logs/download.log
+                           LogMsg $LOGFILE "`cat /home/$USER/logs/download.log`"
                            exit 1
                        else
                            echo $'\e[1;32m'"ALL FILES DOWNLOADED FROM OBJECT STORAGE"$'\e[0m'
+                           LogMsg $LOGFILE "`cat /home/$USER/logs/download.log`"
+                           LogMsg $LOGFILE "FILES DOWNLOADED FROM OBJECT STORAGE"
                            echo
           fi
 }
