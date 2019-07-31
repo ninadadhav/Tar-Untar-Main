@@ -17,7 +17,7 @@ CreateLog(){
         file=$1
         [ ! -e ${file} ] && touch $file
         sudo chmod a+rw $file
-        sudo chown opc:opc $file
+        sudo chown $USER:oinstall $file
 }
 
 
@@ -70,12 +70,12 @@ read -p 'Enter IP Address of Target Server which has OCI CLI installed on it : '
 echo
 }
 
-LOGFILE=/var/log/psft-$HOSTNAME.log
+LOGFILE=/home/$USER/PSFT/psft-$HOSTNAME.log
 CreateLog ${LOGFILE}
 
-echo "' '" > /var/log/psft-$HOSTNAME.log
-sudo mkdir -p /home/$USER/logs
-sudo rm -rf /home/$USER/logs/*
+echo "' '" > /home/$USER/PSFT/psft-$HOSTNAME.log
+sudo mkdir -p /home/$USER/PSFT/logs
+sudo rm -rf /home/$USER/PSFT/logs/*
 
 input_csv
 read_values
