@@ -1,0 +1,32 @@
+#!/bin/bash
+
+upload2obj(){
+echo $'\e[1;33m'"Starting Upload to Object Storage Process..."$'\e[0m'
+echo
+echo $'\e[1;31m'"DO NOT KILL THE SHELL OR PRESS CTRL-C !!!"$'\e[0m'
+for file in `ls $mpoint2`;
+  do
+      LogMsg $LOGFILE "Starting Upload of File $file to the OCS_MIgrations Bucket on OCI Object Storage"
+      echo $'\e[1;36m'"Starting Upload of File $file"$'\e[0m'
+      oci os object put -bn OCS_Migrations --file $mpoint2/$file | tee -a /home/$USER/logs/upload2obj.log 2> /home/$USER/logs/upload2obj_error.log &
+      echo
+      wait
+     cd /home/$USER/logs
+  if [[ -s upload2obj_error.log ]];
+        then
+          if [[ `cat /home/$USER/logs/upload2obj_error.log` == *"Error"* || `cat /home/$USER/logs/upload2obj_error.log` == *"oci: command not found"* ]];
+               then
+                   echo $'\e[1;31m'"OCI Command failed...Please check if OCI is installed and configured corectly or not...Exiting"$'\e[0m'
+                   cat /home/$USER/logs/upload2obj_error.log
+                   exit 1
+          else
+                  cat /home/$USER/logs/upload2obj.log
+                  echo
+                  echo $'\e[1;32m'"All Files uploaded to Object Storage"$'\e[0m'
+                  echo
+   fi
+fi
+  done
+}
+
+upload2obj
