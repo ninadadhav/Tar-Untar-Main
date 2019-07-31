@@ -1,0 +1,72 @@
+#!/bin/bash
+
+source_connectivity(){
+echo $'\e[1;36m'"Checking Source Servers Connectivity..."$'\e[0m'
+echo
+echo
+sleep 2
+for f in $(cat /home/$USER/parsed_file.csv | cut -d"," -f2);
+  do
+    status=$(ssh -q -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=5 -i /home/opc/keys/ocs_key opc@$f echo ok 2>&1)
+    if [[ $status == ok ]] ; then
+          echo $'\e[1;34m'Connectivity Established to $f !!$'\e[0m'
+          echo
+          echo $'\e[1;36m'"Checking if $mpoint2 is present on $f"$'\e[0m'
+          ssh -n -q -o StrictHostKeyChecking=no -i /home/opc/keys/ocs_key opc@$f "
+          if [[ -d $mpoint2 ]]; then
+              echo $'\e[1;32m'Directory is Present at $f$...Proceeding'\e[0m'
+          else
+              echo $'\e[1;31m'Directory $mpoint2 DOES NOT EXIST on Server $f Please Check and re-run the code!!!$'\e[0m'
+          fi" 1>/home/$USER/logs/source_servers.log
+
+          source_out=`cat /home/$USER/logs/source_servers.log`
+          if [[ "${source_out}" == *"DOES NOT EXIST"* ]]; then
+              echo $'\e[1;31m'"*********************************************************************************************************"$'\e[0m'
+              echo $'\e[1;31m'"ERROR FOUND ------------> Directory $mpoint2 DOES NOT EXIST on Source Server $f"$'\e[0m'
+              echo $'\e[1;31m'"*********************************************************************************************************"$'\e[0m'
+              echo
+          else
+              echo $'\e[1;32m'"Directory $mpoint2 present..Proceeding"$'\e[0m'
+              echo
+          fi
+
+    elif [[ $status == "Permission denied"* ]] ; then
+       echo $'\e[1;36m'"Establishing Connection to $f"$'\e[0m'
+       echo $'\e[1;31m'"*************************************************************************************************************************"$'\e[0m'
+       echo $'\e[1;31m'ERROR --------> Permission Denied...Please check the ssh configuration of the Source Server $f$'\e[0m'
+       echo
+       echo $'\e[1;31m'"Cannot determine if $mpoint2 is present on Source $f. Fix connectivity issue and run again "$'\e[0m'
+       echo $'\e[1;31m'"*************************************************************************************************************************"$'\e[0m'
+    else
+       echo $'\e[1;36m'"Establishing Connection to $f"$'\e[0m'
+       echo $'\e[1;31m'"*********************************************************************************************************************************************"$'\e[0m'
+       echo $'\e[1;31m'ERROR --------> Incorrect Authentication..Please check the IP Address and Key provided in the path to the Source Server $f.$'\e[0m'
+       echo
+       echo $'\e[1;31m'"Cannot determine if $mpoint2 is present on Source $f . Fix connectivity issue and run again "$'\e[0m'
+       echo $'\e[1;31m'"*********************************************************************************************************************************************"$'\e[0m'
+    fi >>/home/$USER/logs/final.log
+    sleep 1
+   done
+   cat /home/$USER/logs/final.log
+   final=`cat /home/$USER/logs/final.log`
+   if [[ "${final}" == *"DOES NOT EXIST"* ]]; then
+              echo $'\e[1;31m'____________________________________________________________________________________________$'\e[0m'
+              echo
+              echo $'\e[1;31m'"One or more Errors have been found and highlighted above...Please fix and rerun...EXITING"$'\e[0m'
+              echo $'\e[1;31m'____________________________________________________________________________________________$'\e[0m'
+              echo
+              LogMsg $LOGFILE "`cat /home/$USER/logs/final.log`"
+              LogMsg $LOGFILE "One or more Errors have been found and highlighted above...Please fix and rerun...EXITING"
+              exit 1
+   else
+              echo $'\e[1;32m'_________________________________________________________$'\e[0m'
+              echo
+              echo $'\e[1;32m'"No Errors found with Source Connectivity...Proceeding"$'\e[0m'
+              echo $'\e[1;32m'_________________________________________________________$'\e[0m'
+              LogMsg $LOGFILE "`cat /home/$USER/logs/final.log`"
+              LogMsg $LOGFILE "No Errors found with Source Connectivity...Proceeding"
+   fi
+
+}
+
+source_connectivity
