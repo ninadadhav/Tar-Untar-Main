@@ -16,12 +16,12 @@ echo
 sleep 2
 for g in $(cat /home/$USER/parsed_file.csv | cut -d"," -f1);
   do
-    status1=$(ssh -q -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=5 -i /home/opc/keys/ocs_key opc@$g echo ok 2>&1)
+    status1=$(ssh -q -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=5 -i /home/opc/keys/ocs_key $sudouser@$g echo ok 2>&1)
     if [[ $status1 == ok ]] ; then
           echo $'\e[1;34m'Connectivity Established to $g !!$'\e[0m'
           echo $'\e[1;36m'"Checking if $mountpoint2 is present on $g"$'\e[0m'
           echo
-          ssh -n -q -o StrictHostKeyChecking=no -i /home/opc/keys/ocs_key opc@$g "
+          ssh -n -q -o StrictHostKeyChecking=no -i /home/opc/keys/ocs_key $sudouser@$g "
           if [[ -d $mountpoint2 ]]; then
               echo $'\e[1;32m'Directory is Present at $g$'\e[0m'
           else
