@@ -22,10 +22,10 @@ for ((u=0,v=0 ; u<${a1},v<${b1} ; u++,v++));
        LogMsg $LOGFILE "CONNECTING TO TARGET ${a[$u]}"
        echo
        LogMsg $LOGFILE "DOWNLOADING ${b[$u]}.tar.gz FROM OBJECT STORAGE"
-       ssh -n -q -o StrictHostKeyChecking=no -i /home/opc/keys/ocs_key opc@${a[$u]} "
+       ssh -n -q -o StrictHostKeyChecking=no -i /home/opc/keys/ocs_key $sudouser@${a[$u]} "
            cd $mountpoint2
            sudo tar -xvpPf ${b[$u]}.tar.gz 1> /tmp/remote_untar.log 2> /tmp/remote_untar_error.log"
-       scp -i /home/opc/keys/ocs_key opc@${a[$u]}:"/tmp/remote_untar.log /tmp/remote_untar_error.log" /home/$USER/logs
+       scp -i /home/opc/keys/ocs_key $sudouser@${a[$u]}:"/tmp/remote_untar.log /tmp/remote_untar_error.log" /home/$USER/logs
        if [[ -s "/home/$USER/logs/remote_untar_error.log" ]];
         then
           if [[ `cat /home/$USER/logs/remote_untar_error.log` == *"Exiting with failure status"* ]];
