@@ -1,53 +1,56 @@
 #!/bin/bash
 
-LogMsg(){
-        local log=$1
-        local msg=$2
-        local pid=$$
-        local now=$(date +'%s')
-        local stamp=$(date --date "@${now}" +'%Y/%m/%d %H:%M:%S')
-        echo "${stamp}-${pid}-${msg}" >>$log
-}
-
-downloadfromobjstorage(){
-echo $'\e[1;33m'"Starting Download of TAR Files from Object Storage to Target Servers..."$'\e[0m'
-LogMsg $LOGFILE "Starting Download of TAR Files from Object Storage to Target Servers"
+untar_process(){
+echo $'\e[1;33m'"Starting Untar Process..."$'\e[0m'
+echo
 echo
 cd /home/$USER/PSFT
-echo $'\e[1;36m'"Connecting to Target $oci_target to Download TAR Files from Object Storage"$'\e[0m'
-echo
-echo $'\e[1;31m'"DO NOT KILL THE SHELL OR PRESS CTRL-C !!!"$'\e[0m'
-echo
-LogMsg $LOGFILE "Connecting to $oci_target and downloading files"
-ssh -n -q -o StrictHostKeyChecking=no -i /home/$USER/PSFT/keys/ocs_key oracle@$oci_target "
-   oci os object bulk-download -bn OCS_Migrations --download-dir $mountpoint2 " 1> /home/$USER/PSFT/logs/download.log 2> /home/$USER/PSFT/logs/download_error.log
-   sleep 1
-   cd /home/$USER/PSFT/logs
-        if [[ `cat /home/$USER/PSFT/logs/download_error.log` == *"Error"* || `cat /home/$USER/PSFT/logs/download_error.log` == *"Permission denied"* ]];
+a=(`cat /home/$USER/PSFT/parsed_file.csv | cut -d"," -f1`)
+a1=${#a[@]}
+b=(`cat /home/$USER/PSFT/parsed_file.csv | cut -d"," -f2-3 | sed -e "s/ /-/g" | sed -e "s/,/-/g"`)
+b1=${#b[@]}
+for ((u=0,v=0 ; u<${a1},v<${b1} ; u++,v++));
+    do
+       echo
+       echo $'\e[1;36m'"Connecting to Target ${a[$u]} and Starting Untar..."$'\e[0m'
+       echo
+       echo $'\e[1;31m'"DO NOT KILL THE SHELL OR PRESS CTRL-C !!!"$'\e[0m'
+       echo
+       sleep 2
+       LogMsg $LOGFILE "CONNECTING TO TARGET ${a[$u]}"
+       echo
+       ssh -n -q -o StrictHostKeyChecking=no -i /home/$USER/PSFT/keys/ocs_key oracle@${a[$u]} "
+           cd $mountpoint2
+           sudo tar -xvpPf ${b[$u]}.tar.gz 1> /tmp/remote_untar.log 2> /tmp/remote_untar_error.log"
+       scp -i /home/$USER/PSFT/keys/ocs_key oracle@${a[$u]}:"/tmp/remote_untar.log /tmp/remote_untar_error.log" /home/$USER/PSFT/logs
+       if [[ -s "/home/$USER/PSFT/logs/remote_untar_error.log" ]];
+        then
+          if [[ `cat /home/$USER/PSFT/logs/remote_untar_error.log` == *"Exiting with failure status"* ]];
                then
-                   echo $'\e[1;31m'"OCI Command failed due to the Following Errors...Exiting"$'\e[0m'
-                   LogMsg $LOGFILE "OCI Command failed"
-                   cat /home/$USER/PSFT/logs/download_error.log
-                   LogMsg $LOGFILE "`cat /home/$USER/PSFT/logs/download_error.log`"
+                   echo
+                   echo $'\e[1;31m'"TAR Command failed...Exiting"$'\e[0m'
+                   LogMsg $LOGFILE "TAR Command Failed"
+                   cat /home/$USER/PSFT/logs/remote_untar_error.log
+                   LogMsg $LOGFILE "`cat /home/$USER/PSFT/logs/remote_untar_error.log`"
                    exit 1
-          else
-                  cat /home/$USER/PSFT/logs/download_error.log
-                  LogMsg $LOGFILE "`cat /home/$USER/PSFT/logs/download_error.log`"
-          fi
-          if [[ `cat /home/$USER/PSFT/logs/download.log` == *"Permission denied"* ]];
-                       then
-                           echo $'\e[1;31m'"OCI Command failed due to the Following Errors...Exiting"$'\e[0m'
-                           LogMsg $LOGFILE "OCI Command Failed"
-                           cat /home/$USER/PSFT/logs/download.log
-                           LogMsg $LOGFILE "`cat /home/$USER/PSFT/logs/download.log`"
-                           exit 1
-                       else
-                           echo $'\e[1;32m'"ALL FILES DOWNLOADED FROM OBJECT STORAGE"$'\e[0m'
-                           LogMsg $LOGFILE "`cat /home/$USER/PSFT/logs/download.log`"
-                           LogMsg $LOGFILE "FILES DOWNLOADED FROM OBJECT STORAGE"
-                           echo
-          fi
-cd /home/$USER/psft
+               else
+                   echo
+                   echo $'\e[1;31m'"TAR Command failed...Exiting"$'\e[0m'
+                   LogMsg $LOGFILE "TAR Command Failed"
+                   cat /home/$USER/PSFT/logs/remote_untar_error.log
+                   LogMsg $LOGFILE "`cat /home/$USER/PSFT/logs/remote_untar_error.log`"
+                   exit 1
+         fi
+ else
+        cat /home/$USER/PSFT/logs/remote_untar.log
+        LogMsg $LOGFILE "`cat /home/$USER/PSFT/logs/remote_untar.log`"
+        echo
+        echo $'\e[1;32m'"Untar Process completed successfully..."$'\e[0m'
+        LogMsg $LOGFILE "Untar Process Completed"
+       fi
+    done
+    echo
+    sleep 1
 }
 
-downloadfromobjstorage
+untar_process
