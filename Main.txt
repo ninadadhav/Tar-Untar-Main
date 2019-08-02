@@ -15,9 +15,9 @@ LogMsg(){
 
 CreateLog(){
         file=$1
-        [ ! -e ${file} ] && touch $file
-        sudo chmod a+rw $file
-        sudo chown $USER:oinstall $file
+        [ ! -e ${file} ] && mkdir -p /home/$USER/PSFT &&  mkdir -p /home/$USER/PSFT/logs && chown $USER:oinstall /home/$USER/PSFT/logs && touch $file
+        chmod a+rw $file
+        chown $USER:oinstall $file
 }
 
 
@@ -35,10 +35,10 @@ if [[ -f $inputpath ]]
        echo
        exit 1
 fi
-sed -n '2,$p' <$inputpath > /home/$USER/parsed_file.csv
+sed -n '2,$p' <$inputpath > /home/$USER/PSFT/parsed_file.csv
 LogMsg $LOGFILE "Creating Parsed File"
 LogMsg $LOGFILE "Installing Dos2unix Package for File conversion"
-in=$(sudo yum install -q -y dos2unix pv && dos2unix -q /home/$USER/parsed_file.csv)
+in=$(sudo yum install -q -y dos2unix pv && dos2unix -q /home/$USER/PSFT/parsed_file.csv)
 LogMsg $LOGFILE "$in"
 LogMsg $LOGFILE "Packages Installed"
 echo
@@ -49,10 +49,11 @@ LogMsg $LOGFILE "Checking if NAS Storage is present on Soar VM"
 if [[ -d $mpoint2 ]];
   then
      LogMsg $LOGFILE "Directory $mpoint2 found on SOAR VM...proceeding"
+     echo "NAS Mount Point Directory found on Soar VM...Proceeding"
   else
-     echo $'\e[1;31m'"****************************************************************"'\e[0m'
-     echo $'\e[1;31m'"* SOURCE NAS DIRECTORY DOES NOT EXIST ON SOAR VM...EXITING !!  *"'\e[0m'
-     echo $'\e[1;31m'"****************************************************************"'\e[0m'
+     echo $'\e[1;31m'"****************************************************************"$'\e[0m'
+     echo $'\e[1;31m'"* SOURCE NAS DIRECTORY DOES NOT EXIST ON SOAR VM...EXITING !!  *"$'\e[0m'
+     echo $'\e[1;31m'"****************************************************************"$'\e[0m'
      LogMsg $LOGFILE "NAS DIRECTORY $mpoint2 DOES NOT EXIST on SOAR VM (Needs to have Source Server's shared NAS) ...EXITING !!"
      exit 1
 fi
@@ -74,15 +75,17 @@ mountpoint2=${mountpoint1%/}
 read -p 'Enter IP Address of Target Server which has OCI CLI installed on it : ' oci_target
 LogMsg $LOGFILE "Target IP Address for Target Server Selected is $oci_target"
 echo
+
+read -p 'Enter the user with Sudo Privileges : ' sudouser
+LogMsg $LOGFILE "Sudo User selected is $sudouser"
+echo
 }
 
-sudo mkdir -p /home/$USER/PSFT/logs
-LogMsg $LOGFILE "Creating Logs Folder"
 
-LOGFILE=/home/$USER/PSFT/psft-$HOSTNAME.log
+LOGFILE=/home/$USER/PSFT/logs/psft-$HOSTNAME.log
 CreateLog ${LOGFILE}
 
-echo "' '" > /home/$USER/PSFT/psft-$HOSTNAME.log
+echo "' '" > /home/$USER/PSFT/logs/psft-$HOSTNAME.log
 LogMsg $LOGFILE "Log File Created at /home/$USER/PSFT "
 
 sudo rm -rf /home/$USER/PSFT/logs/*
@@ -90,6 +93,7 @@ LogMsg $LOGFILE "Cleaning Log Files"
 
 LogMsg $LOGFILE "Starting Input Process"
 input_csv
+
 LogMsg $LOGFILE "Starting Read Values Process"
 read_values
 sleep 1
@@ -110,10 +114,13 @@ sleep 1
 
 LogMsg $LOGFILE "Starting Tar Process"
 source tar_process.sh
+
 LogMsg $LOGFILE "Starting Upload Process"
 source upload.sh
+
 LogMsg $LOGFILE "Starting Download Process"
 source downloadfromobjstorage.sh
+
 LogMsg $LOGFILE "Starting Untar Process"
 source untar_process.sh
 
