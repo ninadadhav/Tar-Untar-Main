@@ -18,30 +18,31 @@ for file in `ls $mpoint2`;
   do
       LogMsg $LOGFILE "Starting Upload of File $file to the OCS_MIgrations Bucket on OCI Object Storage"
       echo $'\e[1;36m'"Starting Upload of File $file"$'\e[0m'
-      oci os object put -bn OCS_Migrations --file $mpoint2/$file | tee -a /home/$USER/logs/upload2obj.log 2> /home/$USER/logs/upload2obj_error.log &
+      oci os object put -bn OCS_Migrations --file $mpoint2/$file | tee -a /home/$USER/PSFT/logs/upload2obj.log 2> /home/$USER/PSFT/logs/upload2obj_error.log &
       LogMsg $LOGFILE "oci os object put -bn OCS_Migrations --file $mpoint2/$file"
       echo
       wait
-     cd /home/$USER/logs
+     cd /home/$USER/PSFT/logs
   if [[ -s upload2obj_error.log ]];
         then
-          if [[ `cat /home/$USER/logs/upload2obj_error.log` == *"Error"* || `cat /home/$USER/logs/upload2obj_error.log` == *"oci: command not found"* ]];
+          if [[ `cat /home/$USER/PSFT/logs/upload2obj_error.log` == *"Error"* || `cat /home/$USER/PSFT/logs/upload2obj_error.log` == *"oci: command not found"* ]];
                then
-                   LogMsg $LOGFILE "`cat /home/$USER/logs/upload2obj_error.log`"
+                   LogMsg $LOGFILE "`cat /home/$USER/PSFT/logs/upload2obj_error.log`"
                    LogMsg $LOGFILE "OCI Command failed"
                    echo $'\e[1;31m'"OCI Command failed...Please check if OCI is installed and configured corectly or not...Exiting"$'\e[0m'
-                   cat /home/$USER/logs/upload2obj_error.log
+                   cat /home/$USER/PSFT/logs/upload2obj_error.log
                    exit 1
           else
-                  cat /home/$USER/logs/upload2obj.log
+                  cat /home/$USER/PSFT/logs/upload2obj.log
                   echo
-                  LogMsg $LOGFILE "`cat /home/$USER/logs/upload2obj.log`"
+                  LogMsg $LOGFILE "`cat /home/$USER/PSFT/logs/upload2obj.log`"
                   LogMsg $LOGFILE "File uploaded to Object Storage"
                   echo $'\e[1;32m'"File uploaded to Object Storage"$'\e[0m'
                   echo
    fi
 fi
   done
+cd /home/$USER/psft
 }
 
 upload2obj
