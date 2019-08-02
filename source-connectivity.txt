@@ -16,21 +16,21 @@ LogMsg $LOGFILE "Checking Source Servers Connectivity"
 echo
 echo
 sleep 2
-for f in $(cat /home/$USER/parsed_file.csv | cut -d"," -f2);
+for f in $(cat /home/$USER/PSFT/parsed_file.csv | cut -d"," -f2);
   do
-    status=$(ssh -q -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=5 -i /home/opc/keys/ocs_key opc@$f echo ok 2>&1)
+    status=$(ssh -q -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=5 -i /home/$USER/PSFT/keys/ocs_key $sudouser@$f echo ok 2>&1)
     if [[ $status == ok ]] ; then
           echo $'\e[1;34m'Connectivity Established to $f !!$'\e[0m'
           echo
           echo $'\e[1;36m'"Checking if $mpoint2 is present on $f"$'\e[0m'
-          ssh -n -q -o StrictHostKeyChecking=no -i /home/opc/keys/ocs_key opc@$f "
+          ssh -n -q -o StrictHostKeyChecking=no -i /home/$USER/PSFT/keys/ocs_key $sudouser@$f "
           if [[ -d $mpoint2 ]]; then
               echo $'\e[1;32m'Directory is Present at $f$...Proceeding'\e[0m'
           else
               echo $'\e[1;31m'Directory $mpoint2 DOES NOT EXIST on Server $f Please Check and re-run the code!!!$'\e[0m'
-          fi" 1>/home/$USER/logs/source_servers.log
+          fi" 1>/home/$USER/PSFT/logs/source_servers.log
 
-          source_out=`cat /home/$USER/logs/source_servers.log`
+          source_out=`cat /home/$USER/PSFT/logs/source_servers.log`
           if [[ "${source_out}" == *"DOES NOT EXIST"* ]]; then
               echo $'\e[1;31m'"*********************************************************************************************************"$'\e[0m'
               echo $'\e[1;31m'"ERROR FOUND ------------> Directory $mpoint2 DOES NOT EXIST on Source Server $f"$'\e[0m'
@@ -44,22 +44,22 @@ for f in $(cat /home/$USER/parsed_file.csv | cut -d"," -f2);
     elif [[ $status == "Permission denied"* ]] ; then
        echo $'\e[1;36m'"Establishing Connection to $f"$'\e[0m'
        echo $'\e[1;31m'"*************************************************************************************************************************"$'\e[0m'
-       echo $'\e[1;31m'ERROR --------> Permission Denied...Please check the ssh configuration of the Source Server $f$'\e[0m'
+       echo $'\e[1;31m'"ERROR --------> Permission Denied...Please check the ssh configuration of the Source Server $f$"'\e[0m'
        echo
        echo $'\e[1;31m'"Cannot determine if $mpoint2 is present on Source $f. Fix connectivity issue and run again "$'\e[0m'
        echo $'\e[1;31m'"*************************************************************************************************************************"$'\e[0m'
     else
        echo $'\e[1;36m'"Establishing Connection to $f"$'\e[0m'
        echo $'\e[1;31m'"*********************************************************************************************************************************************"$'\e[0m'
-       echo $'\e[1;31m'ERROR --------> Incorrect Authentication..Please check the IP Address and Key provided in the path to the Source Server $f.$'\e[0m'
+       echo $'\e[1;31m'"ERROR --------> Incorrect Authentication..Please check the IP Address and Key provided in the path to the Source Server $f."$'\e[0m'
        echo
        echo $'\e[1;31m'"Cannot determine if $mpoint2 is present on Source $f . Fix connectivity issue and run again "$'\e[0m'
        echo $'\e[1;31m'"*********************************************************************************************************************************************"$'\e[0m'
-    fi >>/home/$USER/logs/final.log
+    fi >>/home/$USER/PSFT/logs/final.log
     sleep 1
    done
-   cat /home/$USER/logs/final.log
-   final=`cat /home/$USER/logs/final.log`
+   cat /home/$USER/PSFT/logs/final.log
+   final=`cat /home/$USER/PSFT/logs/final.log`
    LogMsg $LOGFILE "$final"
    if [[ "${final}" == *"DOES NOT EXIST"* || "${final1}" == *"Cannot determine"* ]]; then
               echo $'\e[1;31m'____________________________________________________________________________________________$'\e[0m'
