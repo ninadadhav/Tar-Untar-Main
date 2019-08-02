@@ -19,10 +19,10 @@ for ((u=0,v=0 ; u<${a1},v<${b1} ; u++,v++));
        sleep 2
        LogMsg $LOGFILE "CONNECTING TO TARGET ${a[$u]}"
        echo
-       ssh -n -q -o StrictHostKeyChecking=no -i /home/$USER/PSFT/keys/ocs_key oracle@${a[$u]} "
+       ssh -n -q -o StrictHostKeyChecking=no -i /home/$USER/PSFT/keys/ocs_key $sudouser@${a[$u]} "
            cd $mountpoint2
            sudo tar -xvpPf ${b[$u]}.tar.gz 1> /tmp/remote_untar.log 2> /tmp/remote_untar_error.log"
-       scp -i /home/$USER/PSFT/keys/ocs_key oracle@${a[$u]}:"/tmp/remote_untar.log /tmp/remote_untar_error.log" /home/$USER/PSFT/logs
+       scp -i /home/$USER/PSFT/keys/ocs_key $sudouser@${a[$u]}:"/tmp/remote_untar.log /tmp/remote_untar_error.log" /home/$USER/PSFT/logs
        if [[ -s "/home/$USER/PSFT/logs/remote_untar_error.log" ]];
         then
           if [[ `cat /home/$USER/PSFT/logs/remote_untar_error.log` == *"Exiting with failure status"* ]];
