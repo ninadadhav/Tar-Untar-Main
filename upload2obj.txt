@@ -18,7 +18,7 @@ for file in `ls $mpoint2`;
   do
       LogMsg $LOGFILE "Starting Upload of File $file to the OCS_MIgrations Bucket on OCI Object Storage"
       echo $'\e[1;36m'"Starting Upload of File $file"$'\e[0m'
-      oci os object put -bn OCS_Migrations --file $mpoint2/$file | tee -a /home/$USER/PSFT/logs/upload2obj.log 2> /home/$USER/PSFT/logs/upload2obj_error.log &
+      oci os object put --overwrite -bn OCS_Migrations --file $mpoint2/$file | tee -a /home/$USER/PSFT/logs/upload2obj.log 2> /home/$USER/PSFT/logs/upload2obj_error.log &
       LogMsg $LOGFILE "oci os object put -bn OCS_Migrations --file $mpoint2/$file"
       echo
       wait
